@@ -1,0 +1,75 @@
+[[@Windows,live]][[!var
+kh:TKeyHolder;
+gd:TGameData;
+s:string;
+tc:cardinal;
+const
+MaxTimeout=120000;
+function ts:boolean;
+begin
+  Result:=Context.Connected and (cardinal(GetTickCount-tc)<MaxTimeout);
+end;
+]][[
+Context.ContentType:='text/plain';
+
+s:=Context['k'].Value;
+if s='' then
+ begin
+  
+  kh:=TKeyHolder.Create;
+  try
+    
+    GameQueue.RegisterFeed(kh);
+  
+    tc:=GetTickCount;
+    while ts and (kh.Game=nil) do
+      Sleep(50);//TODO: use xxm suspended requests
+  
+    if kh.Game=nil then
+     begin
+      GameQueue.ClearFeed(kh);
+      Context.SetStatus(404,'No opponent found');
+      Context.SendHTML('No opponent found');
+     end
+    else
+     begin
+      if kh.Game.Key1=kh.Key then 
+       begin
+        s:='g';
+        kh.Game.Signal1('f'+Context['f'].Value);
+       end
+      else 
+       begin
+        s:='r';
+        kh.Game.Signal2('f'+Context['f'].Value);
+       end;
+      Context.SendHTML('k '+kh.Key+' '+s);
+     end;
+  
+  finally
+    kh.Free;
+  end;
+ end
+else
+ begin
+  gd:=GameQueue.GameByKey(s);
+  if gd=nil then raise Exception.Create('game not found');
+
+  if gd.Key1=s then
+   begin
+    gd.Signal1(Context['c'].Value);
+    tc:=GetTickCount;
+    while ts and (gd.PlayerMsg1='') do
+      Sleep(50);
+    Context.SendHTML(gd.PlayerMsg1);
+   end
+  else
+   begin
+    gd.Signal2(Context['c'].Value);
+    tc:=GetTickCount;
+    while ts and (gd.PlayerMsg2='') do
+      Sleep(50);
+    Context.SendHTML(gd.PlayerMsg2);
+   end;
+
+ end;

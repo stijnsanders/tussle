@@ -1,0 +1,22 @@
+{
+	"name": "tussle",
+	"compileCommand": "C:\\Delphi7\\Bin\\dcc32.exe -U[[HandlerPath]]public -Q [[ProjectName]].dpr",
+	"files": {
+		"default_xxm": {
+			"path": "Default.xxm",
+			"unitName": "default_xxm1",
+			"unitPath": ""
+		},
+		"game_xxm": {
+			"path": "Game.xxm",
+			"unitName": "game_xxm1",
+			"unitPath": ""
+		}
+	},
+	"units": {
+		"live": {}
+	},
+	"resources": {},
+	"lastModified": "2020-07-22T01:08:46",
+	"uuid": "{D81DA855-BEB1-49CE-AACE-87AC49A640FA}"
+}

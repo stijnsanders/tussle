@@ -1,0 +1,439 @@
+[[!var
+i,x,y,cs:integer;
+
+const
+startCount:array[0..9] of integer=(1,1,8,5,3,2,2,1,1,6);//total:30
+
+
+]][[
+
+cs:=Context['c'].AsInteger;
+if cs<4 then cs:=60;
+
+<<!doctype html>
+<html>
+<title>tussle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+BODY {background-color:#FED;font-family:sans-serif;font-size:14pt;user-select:none;}
+H1 {text-align:center;margin:0em 0em 0.2em 0em;}
+BUTTON {font-family:sans-serif;font-size:20pt;margin:0.4em;}
+.fb {display:flex;align-items:center;justify-content:center;}
+.f {width:[[=cs]]px;height:[[=cs]]px;}
+.d {width:[[=cs]]px;height:[[=cs]]px;vertical-align:middle;}
+.c {width:[[=cs]]px;height:[[=cs]]px;overflow:hidden;padding:0em;}
+.n {width:1.2em;text-align:center;}
+.e {position:absolute;top:[[=(cs*25) div 10]]px;width:[[=cs*9]]px;height:[[=(cs*33) div 10]]px;border:0.5em solid gold;padding:0.3em;margin:0.5em;background-color:#EEE;text-align:center;}
+
+</style>
+<body>
+<h1>tussle</h1>
+
+<div class="fb">
+<div style="position:relative;width:[[=cs*10]]px;height:[[=cs*10]]px;">
+<img src="img/field.svg" style="position:absolute;left:0px;top:0px;width:[[=cs*10]]px;height:[[=cs*10]]px;"/>>
+for y:=0 to 9 do
+ begin
+  for x:=0 to 9 do
+   begin
+    <<div id="c[[=x]][[=y]]" class="c" style="position:absolute;left:[[=cs*x]]px;top:[[=cs*y]]px;" onclick="cc([[=x]],[[=y]]);"><img id="f[[=x]][[=y]]" src="img/0.svg" class="f" /></div>>
+   end;
+ end;
+<<div class="e" id="e1">
+Place your pieces on the bottom three rows of the board.<br />
+First, select a piece level to place:<br />
+(select <img src="img/n0.svg" class="d" /> below, for example)
+</div>
+<div class="e" id="e2" style="display:none;">
+Then, place it somewhere on the board in the bottom 3 rows:
+</div>
+<div class="e" id="e3" style="display:none;">
+Continue until the three bottom rows are full.<br />
+Keep your defense and offense in mind.
+</div>
+<div class="e" id="e4" style="display:none;">
+Are you ready to play?<br />
+<button onclick="sg();">Start the tussle</button>
+</div>
+<div class="e" id="e5" style="display:none;">
+Connecting. Please wait...
+</div>
+</div>
+</div>
+<br />
+
+<div class="fb">
+<table id="pc1" cellspacing="0" cellpadding="0">
+<tr>>
+for i:=0 to 9 do
+ begin
+  <<td id="x[[=i]]" class="c" onclick="nc([[=i]]);"><img src="img/n[[=i]].svg" class="d" /></td>>
+ end;
+<</tr>
+<tr>>
+for i:=0 to 9 do
+ begin
+  <<td id="n[[=i]]" class="n" onclick="nc([[=i]]);">>=integer(startCount[i])<</td>>
+ end;
+<</tr>
+</table>
+<div id="gm" style="border-bottom:1px solid #999;margin-bottom:1em;"></div>
+</div>
+<div id="gn" style="display:none;text-align:center;">
+<button onclick="sr([[=Context['n'].AsInteger+1]],false);">Play again (new setup)</button><br />
+<button onclick="sr([[=Context['n'].AsInteger+1]],true);">Play again with this setup</button>
+</div>
+<script><!--
+var pc=[[
+Context.SendHTML('[');
+for i:=0 to 9 do
+ begin
+  if i<>0 then Context.SendHTML(',');
+  Context.SendHTML(startCount[i]);
+ end;
+Context.SendHTML(']');
+]];
+
+var h=-1;
+var e=0;
+var field=[ [],[],[],[],[],[],[],[],[],[] ];
+var fp="",op="";
+var hx=-1,hy=-1;
+var gm=document.getElementById("gm");
+var gamekey="";
+
+function nClear(){
+	document.getElementById(["x",h].join("")).style.backgroundColor="";
+	document.getElementById(["n",h].join("")).style.backgroundColor="";
+	h=-1;
+}
+function cClear(x,y){
+	var n=field[y][x];
+	if(n!=undefined){
+		field[y][x]=undefined;
+		pc[n]++;
+		document.getElementById(["n",n].join("")).innerText=(pc[n]==0?"-":pc[n]);
+		document.getElementById(["f",x,y].join("")).src="img/0.svg";
+	}	
+	return n;
+}
+function cSet(x,y,v){
+	var c=pc[v];
+	if(c!=0){
+		document.getElementById(["f",x,y].join("")).src=["img/n",v,".svg"].join("");
+		field[y][x]=v;
+		c--;
+		pc[v]=c;
+		document.getElementById(["n",v].join("")).innerText=(c==0?"-":c);
+		return c;
+	}
+}
+function isMobile(x,y){
+	var c=field[y][x];
+	return c>0&&c<9;
+}
+function cc(x,y){
+	if(e<5){
+		if(h==-1){
+			if(y>6)
+				cClear(x,y);
+		}
+		else{
+			if(y>6){
+				if(cClear(x,y)!=h){
+					if(cSet(x,y,h)==0)nClear();
+					var i=0;
+					while(i<10&&pc[i]==0)i++;
+					if(i==10){
+						document.getElementById("e3").style.display="none";
+						document.getElementById("e4").style.display="";
+						e=3;
+					}
+				}
+				if(e==1){
+					document.getElementById("e2").style.display="none";
+					document.getElementById("e3").style.display="";
+					e=2;
+				}
+			}
+		}
+	}
+	else
+	if(e==6){
+		if(hx!=-1 && field[y][x]==-1){
+			if((x==hx&&y==hy-1)||(x==hx&&y==hy+1)||(x==hx-1&&y==hy)||(x==hx+1&&y==hy)){
+				var c=field[hy][hx];
+				var m=["m",hx,hy,x,y].join("");
+				field[hy][hx]=-1;
+				field[y][x]=c;
+				document.getElementById(["f",x,y].join("")).src=["img/",fp,c,".svg"].join("");
+				document.getElementById(["f",hx,hy].join("")).src="img/0.svg";
+				document.getElementById(["c",hx,hy].join("")).style.backgroundColor="";
+				hx=-1;
+				hy=-1;
+				gm.innerText="Piece moved.";
+				e=7;
+				ss(m);
+			}
+			else{
+				gm.innerText="Invalid move.";
+			}
+		}
+		else
+		if(hx!=-1 && field[y][x]==10){
+			if((x==hx&&y==hy-1)||(x==hx&&y==hy+1)||(x==hx-1&&y==hy)||(x==hx+1&&y==hy)){
+				var m=["a",hx,hy,x,y].join("");
+				gm.innerText="Attack!";
+				e=8;
+				document.getElementById(["c",hx,hy].join("")).style.backgroundColor="";
+				hx=-1;
+				hy=-1;
+				ss(m);
+			}
+			else{
+				gm.innerText="Invalid move.";
+			}
+		}
+		else{
+			if(hx!=-1){
+				document.getElementById(["c",hx,hy].join("")).style.backgroundColor="";
+				hx=-1;
+				hy=-1;
+			}
+			if(isMobile(x,y)){
+				document.getElementById(["c",x,y].join("")).style.backgroundColor="blue";
+				hx=x;
+				hy=y;
+				gm.innerText="Select where to move or attack.";
+			}
+			else{
+				gm.innerText="This piece can't move.";
+			}
+		}
+	}
+}
+function nc(n){
+	if(h!=-1)nClear();
+	if(pc[n]!=0){
+		document.getElementById(["x",n].join("")).style.backgroundColor="gold";
+		document.getElementById(["n",n].join("")).style.backgroundColor="gold";
+		h=n;
+	}
+	if(e==0){
+		document.getElementById("e1").style.display="none";
+		document.getElementById("e2").style.display="";
+		e=1;
+	}
+}
+(function sf(){
+	var h=document.location.hash;
+	if(h.substr(1,3)=="/f/"){
+		var i;
+		for(i=0;i<10;i++)cSet(i,7,h[i+ 4]|0);
+		for(i=0;i<10;i++)cSet(i,8,h[i+14]|0);
+		for(i=0;i<10;i++)cSet(i,9,h[i+24]|0);
+	}
+	var i=0;
+	while(i<10&&pc[i]==0)i++;
+	if(i==10){
+		document.getElementById("e1").style.display="none";
+		document.getElementById("e2").style.display="none";
+		document.getElementById("e3").style.display="none";
+		document.getElementById("e4").style.display="";
+		e=3;
+	}
+})();
+function fPrepare(fpx,opx){
+	fp=fpx;
+	op=opx;
+	for(var y=0;y<3;y++)
+		for(var x=0;x<10;x++){
+			document.getElementById(["f",x,y].join("")).src="img/"+op+"x.svg";
+			field[y][x]=10;
+		}
+	field[3]=[-1,-1,11,11,-1,-1,11,11,-1,-1];
+	field[4]=[-1,-1,-1,11,-1,-1,-1,11,-1,-1];
+	field[5]=[-1,-1,11,-1,-1,-1,11,-1,-1,-1];
+	field[6]=[-1,-1,11,11,-1,-1,11,11,-1,-1];
+	for(var y=7;y<10;y++)
+		for(var x=0;x<10;x++)
+			document.getElementById(["f",x,y].join("")).src=["img/",fp,field[y][x],".svg"].join("");
+}
+function sg(){
+	var i=0;
+	while(i<10&&pc[i]==0)i++;
+	if(i<10){
+		alert("Not all your pieces are on the field yet.");
+		return false;
+	}
+	document.getElementById("e4").style.display="none";
+	document.getElementById("e5").style.display="";
+	e=5;
+	document.getElementById("pc1").style.display="none";
+	document.location.hash="/f/"+field[7].join("")+field[8].join("")+field[9].join("");
+
+	document.getElementById("e5").innerText="Connected. Waiting for an opponent...";
+
+	console.log(">game");
+	fetch("Game.xxm?f="+field[7].join("")+field[8].join("")+field[9].join(""))
+	.then(function(res){return res.text();})
+	.then(function(txt){
+			console.log("<"+txt);
+			var k=txt.split(" ");
+			//if(k[0]!="k")throw?
+			gamekey=k[1];
+
+			if(k[2]=="g"){
+				fPrepare("g","r");
+				e=6;
+				document.getElementById("e5").style.display="none";
+				gm.innerText="You're the green team. Start by selecting a piece to move.";
+			}
+			else
+			if(k[2]=="r"){
+				fPrepare("r","g");
+				e=7;
+				document.getElementById("e5").style.display="none";
+				gm.innerText="You're the red team. Green has the opening move.";
+				ss("next");
+			}
+			//else throw
+	})
+	;
+}
+function ss(cmd){
+	console.log(">"+cmd);
+	fetch("Game.xxm?k="+gamekey+"&c="+cmd)
+	.then(function(res){return res.text();})
+	.then(sn);
+}
+function sn(m){
+	console.log("<"+m);
+	gm.title=m;//debug
+	if(m[0]=="m"){//move
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(field[ay][ax]==10&&field[by][bx]==-1){
+			field[ay][ax]=-1;
+			field[by][bx]=10;
+			document.getElementById(["f",ax,ay].join("")).src="img/0.svg";
+			document.getElementById(["f",bx,by].join("")).src="img/"+op+"x.svg";
+			gm.innerText="Opponent moved a piece. Select a piece to move.";
+			e=6;
+		}
+	}
+	else
+	if(m[0]=="v"){//victory, opponent
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(field[ay][ax]==10&&field[by][bx]!=-1){
+			field[ay][ax]=-1;
+			field[by][bx]=10;
+			document.getElementById(["f",ax,ay].join("")).src="img/0.svg";
+			document.getElementById(["f",bx,by].join("")).src="img/"+op+"x.svg";
+			gm.innerHTML="<img src=\"img/"+op+m[5]+".svg\" class=\"d\" /> wins from <img src=\"img/"+fp+m[6]+".svg\" class=\"d\" />";
+			e=6;
+		}
+	}
+	else
+	if(m[0]=="V"){//victory, self
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(isMobile(ax,ay)&&field[by][bx]==10){
+			var c=field[ay][ax];
+			field[ay][ax]=-1;
+			field[by][bx]=c;
+			document.getElementById(["f",ax,ay].join("")).src="img/0.svg";
+			document.getElementById(["f",bx,by].join("")).src=["img/",fp,c,".svg"].join("");
+			gm.innerHTML="<img src=\"img/"+fp+m[5]+".svg\" class=\"d\" /> wins from <img src=\"img/"+op+m[6]+".svg\" class=\"d\" />";
+			e=7;
+			ss("next");
+		}
+	}
+	else
+	if(m[0]=="d"){//defeat, opponent
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(field[ay][ax]==10&&field[by][bx]!=-1){
+			field[ay][ax]=-1;
+			document.getElementById(["f",ax,ay].join("")).src="img/0.svg";
+			gm.innerHTML="<img src=\"img/"+op+m[6]+".svg\" class=\"d\" /> lost from <img src=\"img/"+fp+m[5]+".svg\" class=\"d\" />";
+			e=6;
+		}
+	}
+	else
+	if(m[0]=="D"){//defeat, self
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(isMobile(ax,ay)&&field[by][bx]==10){
+			field[ay][ax]=-1;
+			document.getElementById(["f",ax,ay].join("")).src="img/0.svg";
+			gm.innerHTML="<img src=\"img/"+fp+m[6]+".svg\" class=\"d\" /> lost from <img src=\"img/"+op+m[5]+".svg\" class=\"d\" />";
+			e=7;
+			ss("next");
+		}
+	}
+	else
+	if(m[0]=="b"||m[0]=="B"){//both die
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(field[ay][ax]!=-1&&field[by][bx]!=-1){
+			field[ay][ax]=-1;
+			field[by][bx]=-1;
+			document.getElementById(["f",ax,ay].join("")).src="img/0.svg";
+			document.getElementById(["f",bx,by].join("")).src="img/0.svg";
+			gm.innerHTML="<img src=\"img/n"+m[5]+".svg\" class=\"d\" /> both lose";
+			if(m[0]=="b"){
+				e=6;
+			}
+			else{
+				e=7;
+				ss("next");
+			}
+		}
+	}
+	else
+	if(m[0]=="w"){//game won
+		var ax=m[1]|0,ay=m[2]|0;
+		if(field[ay][ax]==10){
+			document.getElementById(["f",ax,ay].join("")).src=["img/",op,0,".svg"].join("");
+			gm.innerHTML="&emsp;<br />&emsp;&emsp;<b>YOU'VE WON!</b>&emsp;&emsp;<br />&emsp;";
+			gm.style.backgroundColor="#FC0";
+			e=9;
+			document.getElementById("gn").style.display="";
+		}
+	}
+	else
+	if(m[0]=="l"){//game lost
+		var ax=m[1]|0,ay=m[2]|0,bx=m[3]|0,by=m[4]|0;
+		if(field[ay][ax]==10){
+			document.getElementById(["f",ax,ay].join("")).src=["img/",op,m[5],".svg"].join("");
+			document.getElementById(["f",bx,by].join("")).src="img/n0.svg";
+			gm.innerHTML="&emsp;<br />&emsp;&emsp;<b>YOU'VE LOST!</b>&emsp;&emsp;<br />&emsp;";
+			gm.style.backgroundColor="#09C";
+			e=9;
+			document.getElementById("gn").style.display="";
+		}
+	}
+	else {
+		//debug
+		gm.innerText=m;
+	}
+}
+function sr(n,s){
+	if(s)
+		document.location.reload();
+	else
+		document.location.replace("?c=[[=cs]]&n="+n);
+}
+//--></script>
+
+<div style="margin-top:1em;border:1px solid #CCC;padding:0.5em;">
+Pieces and their count are displayed from left to right, ordered from low rank to high rank.<br />
+Per turn, a player can move one piece (except <img src="img/n0.svg" class="d" /> and <img src="img/n9.svg" class="d" />)<br />
+to a free spot, or onto an occupied spot to attack.<br />
+When a piece attacks, the piece of the lowest rank dies.<br />
+If both are of the same rank, both die.<br />
+Exceptions: When <img src="img/n1.svg" class="d" /> attacks, it can kill <img src="img/n8.svg" class="d" /> (not<br />
+the other way around), <img src="img/n3.svg" class="d" /> can neutralise <img src="img/n9.svg" class="d" />.<br />
+The object of the game is to catch <img src="img/n0.svg" class="d" /> of the opposing team.<br />
+Start by setting up your pieces on the bottom 3 rows. <br/>
+Team color is determined by chance when the game starts. Green makes the first move.
+</div>
+
+</body>
+</html>
